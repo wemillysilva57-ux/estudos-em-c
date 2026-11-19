@@ -7,4 +7,5 @@ main(){
         printf("%d",num);
         num++;
     } while (num >=10);
+    
 }
