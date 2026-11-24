@@ -1,5 +1,5 @@
 #include <stdio.h>
-main(){
+ int main(){
 //switch case só compara igualdade
     int opcao;
     float compra,desconto,valorFinal;

@@ -1,5 +1,5 @@
 include <stdio.h>
-main(){
+ int main(){
     int idade;
 
     printf("digite sua idade\n");

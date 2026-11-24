@@ -1,6 +1,6 @@
 //receber uma numero e identificar se é par ou impar
 #include <stdio.h>
- main(){
+ int main(){
     
     int num;
 //recebe 3 numeros
