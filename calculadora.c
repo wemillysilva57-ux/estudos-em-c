@@ -1,9 +1,9 @@
 #include <stdio.h>
-
+//aqui está definindo o max de numeros como constante ou seja em vez de colocar um valor vai colocar uma constante por que fica mais fácil pra manutenção do código.
 #define MAX_NUMEROS 100
 #define MAX_HISTORICO 50
 
-// Estrutura para guardar cada calculo no historico
+// cria um novo tipo de dado válido
 typedef struct {
     char operacao;
     int qtdNumeros;
@@ -11,11 +11,11 @@ typedef struct {
 } RegistroHistorico;
 
 int main() {
-    double numeros[MAX_NUMEROS];
-    RegistroHistorico historico[MAX_HISTORICO];
+    double armzmnt_numeros[MAX_NUMEROS];
+    RegistroHistorico historico[MAX_HISTORICO];//array que tem os 3 tipos de dados em vez de ser separado
     int totalHistorico = 0;
     int opcaoMenu;
-
+//mostrando as opções e recolhendo a opção escolhida pelo usuário
     do {
         printf("\n=== CALCULADORA AVANCADA ===\n");
         printf("1. Fazer um novo calculo\n");
@@ -23,24 +23,26 @@ int main() {
         printf("0. Sair\n");
         printf("Escolha uma opcao: ");
         scanf("%d", &opcaoMenu);
-
+//se opção for == a fazer cálculo 
         if (opcaoMenu == 1) {
-            int n = 0;
+            int numeros = 0;//contando quantas vezes o usuário digitou
             char operacao;
             double resultado = 0;
             int erroDivisao = 0;
+            int erroOperacaoInvalida = 0;
 
-            // 1. Receber n numeros
+            //aqui vai entender o "total" de números que vão ser executados na operação
             printf("\nDigite os numeros (digite uma letra, ex: 'f', para finalizar a entrada):\n");
-            while (n < MAX_NUMEROS && scanf("%lf", &numeros[n]) == 1) {
-                n++;
+            while (numeros < MAX_NUMEROS && scanf("%lf", &armzmnt_numeros[numeros]) == 1) {
+                //loop para verificar se pode receber mais um valor do usuário ou se ele já esgotou com suas possibilidades
+                //se a condicional do loop for aceita adiciona mais um número dentro da variavél.
+                numeros++;
             }
 
-            // Limpa a letra que encerrou a leitura do teclado
-            while (getchar() != '\n');
 
             if (n == 0) {
                 printf("Nenhum numero foi digitado!\n");
+            //pula para o próximo item.
                 continue;
             }
 
@@ -49,42 +51,46 @@ int main() {
             scanf(" %c", &operacao);
 
             // 3. Executar a operacao escolhida por todos os n numeros
-            resultado = numeros[0]; // Comeca com o primeiro numero digitado
-
-            for (int i = 1; i < n; i++) {
+            resultado = armzmnt_numeros[0]; // Comeca com o primeiro numero digitado
+              //a i ta verificando se i é menor que a lista e dps incrementa uma unidade na var=i
+            for (int i = 1; i < numeros; i++) {
                 switch (operacao) {
                     case '+':
-                        resultado += numeros[i];
+                    //soma todos os elementos da lista cujo o indice é respectivo a i e vai somar cada um de uma vez ou seja vai fazer o laço até ser menor que o total de numeros armazenados na lista armzmnt_numeros.
+                        resultado += armzmnt_numeros[i];
                         break;
                     case '-':
-                        resultado -= numeros[i];
+                        resultado -= armzmnt_numeros[i];
                         break;
                     case '*':
-                        resultado *= numeros[i];
+                        resultado *= armzmnt_numeros[i];
                         break;
                     case '/':
-                        if (numeros[i] != 0) {
-                            resultado /= numeros[i];
-                        } else {
+                    
+                        if (armzmnt_numeros[i] != 0) { //verifica se é 0
+                            resultado /= armzmnt_numeros[i];//se não for = 0 executa
+                        } else {//se for = 0 faz isso 
                             printf("Erro: Divisao por zero detectada!\n");
                             erroDivisao = 1;
                         }
                         break;
                     default:
                         printf("Operacao invalida!\n");
-                        erroDivisao = 1;
+                        erroOperacaoInvalida = 1;
                         break;
                 }
-                if (erroDivisao) break;
+                if (erroDivisao ||erroOperacaoInvalida) break;
             }
 
             // 4. Mostrar o resultado e salvar no historico
             if (!erroDivisao) {
                 printf("\n>> Resultado final: %.2lf\n", resultado);
-
-                if (totalHistorico < MAX_HISTORICO) {
+               //finalizou tudo que era de calculo
+                if (totalHistorico < MAX_HISTORICO) {//totalHistorico menor que o MAX_historico
+                    //setar-atribuir 
+                    //ta colocando os valores que recebeu do usuário na struct ou seja no registroHistorico
                     historico[totalHistorico].operacao = operacao;
-                    historico[totalHistorico].qtdNumeros = n;
+                    historico[totalHistorico].qtdNumeros = numeros;
                     historico[totalHistorico].resultado = resultado;
                     totalHistorico++;
                 }
@@ -96,14 +102,16 @@ int main() {
             if (totalHistorico == 0) {
                 printf("Nenhum calculo realizado ainda.\n");
             } else {
+            //contador de total de historico para contar quantos indices o total de historico teve
                 for (int i = 0; i < totalHistorico; i++) {
-                    printf("%d) Operacao [%c] com %d numeros = %.2lf\n",
-                           i + 1,
-                           historico[i].operacao,
+                    //saida para usuário exemplificada: 1)operação + com 2 numeros
+                    printf("%d"Operacao"[%c]"com"%d"numeros"= %.2lf\n",//
+                           i + 1,//altera o número que aparece na tela ou seja,faz isso para não ficar 0 operação e sim 1 por que vai enumerar não a quantidade de operações mas sim o número
+                           historico[i].operacao,// .nome do dado declarado na struct puxa um campo da struct
                            historico[i].qtdNumeros,
-                           historico[i].resultado);
+                           historico[i].resultado);//o parentese se fecha quando acabar o  "resgate" dos dados do código ou seja as varia
                 }
-            }
+            }//parei aqui
         } else if (opcaoMenu != 0) {
             printf("Opcao invalida! Tente novamente.\n");
         }
