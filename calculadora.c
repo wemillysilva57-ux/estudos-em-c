@@ -40,7 +40,7 @@ int main() {
             }
 
 
-            if (n == 0) {
+            if (numeros == 0) {
                 printf("Nenhum numero foi digitado!\n");
             //pula para o próximo item.
                 continue;
@@ -105,14 +105,17 @@ int main() {
             //contador de total de historico para contar quantos indices o total de historico teve
                 for (int i = 0; i < totalHistorico; i++) {
                     //saida para usuário exemplificada: 1)operação + com 2 numeros
-                    printf("%d"Operacao"[%c]"com"%d"numeros"= %.2lf\n",//
+                    printf("%d Operacao %c com %d numeros = %.2lf\n",//
                            i + 1,//altera o número que aparece na tela ou seja,faz isso para não ficar 0 operação e sim 1 por que vai enumerar não a quantidade de operações mas sim o número
                            historico[i].operacao,// .nome do dado declarado na struct puxa um campo da struct
                            historico[i].qtdNumeros,
                            historico[i].resultado);//o parentese se fecha quando acabar o  "resgate" dos dados do código ou seja as varia
                 }
             }//parei aqui
-        } else if (opcaoMenu != 0) {
+        } else if (opcaoMenu == 0) {
+            break;
+
+        }  else  {
             printf("Opcao invalida! Tente novamente.\n");
         }
 
@@ -126,4 +129,3 @@ int main() {
 
 
 
-}
