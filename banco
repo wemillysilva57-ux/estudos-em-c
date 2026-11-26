@@ -1,0 +1,322 @@
+#include <stdio.h>
+#include <string.h>
+#include "meu_banco.h"
+
+int carregarBanco(Carteira c[]) {
+    FILE *arq = fopen(ARQUIVO, "r");
+    int qtd = 0;
+
+    if (arq == NULL) {
+        printf("Banco novo criado.\n");
+        return 0;
+    }
+
+    while (qtd < MAX && fscanf(arq, " %49[^;];%d;%d;%f;%d;%d",
+                               c[qtd].cliente, &c[qtd].numero, &c[qtd].tipo,
+                               &c[qtd].saldo, &c[qtd].emprestimo,
+                               &c[qtd].qtdHistorico) == 6) {
+        for (int j = 0; j < c[qtd].qtdHistorico; j++) {
+            fscanf(arq, " %f %c", &c[qtd].historico[j].valor,
+                   &c[qtd].historico[j].transacao);
+        }
+        qtd++;
+    }
+
+    fclose(arq);
+    printf("Banco aberto com %d conta(s).\n", qtd);
+    return qtd;
+}
+
+void salvarBanco(Carteira c[], int qtd) {
+    FILE *arq = fopen(ARQUIVO, "w");
+
+    if (arq == NULL) {
+        printf("Erro ao salvar o arquivo.\n");
+        return;
+    }
+
+    for (int i = 0; i < qtd; i++) {
+        fprintf(arq, "%s;%d;%d;%.2f;%d;%d", c[i].cliente, c[i].numero,
+                c[i].tipo, c[i].saldo, c[i].emprestimo, c[i].qtdHistorico);
+        for (int j = 0; j < c[i].qtdHistorico; j++) {
+            fprintf(arq, " %.2f %c", c[i].historico[j].valor,
+                    c[i].historico[j].transacao);
+        }
+        fprintf(arq, "\n");
+    }
+
+    fclose(arq);
+}
+
+void menuBanco(Carteira c[], int *qtd) {
+    int opcao;
+
+    do {
+        printf("\n===== BANCO =====\n");
+        printf("1 - Cadastrar conta\n");
+        printf("2 - Depositar\n");
+        printf("3 - Sacar\n");
+        printf("4 - Solicitar emprestimo\n");
+        printf("5 - Relatorio\n");
+        printf("0 - Voltar\n");
+        printf("Opcao: ");
+        scanf("%d", &opcao);
+
+        switch (opcao) {
+            case 1:
+                cadastrarConta(c, qtd);
+                break;
+            case 2:
+                depositar(c, *qtd);
+                break;
+            case 3:
+                sacar(c, *qtd);
+                break;
+            case 4:
+                solicitarEmprestimo(c, *qtd);
+                break;
+            case 5:
+                mostrarRelatorio(c, *qtd);
+                break;
+            case 0:
+                salvarBanco(c, *qtd);
+                break;
+            default:
+                printf("Opcao invalida.\n");
+        }
+    } while (opcao != 0);
+}
+
+void cadastrarConta(Carteira c[], int *qtd) {
+    char nome[50];
+    int tipo;
+    int numero = 1000;
+    int existente = -1;
+    int contasCliente = 0;
+
+    if (*qtd == MAX) {
+        printf("Banco cheio.\n");
+        return;
+    }
+
+    printf("Nome do cliente: ");
+    scanf(" %49[^\n]", nome);
+    printf("Tipo (1 - Corrente, 2 - Salario, 3 - Poupanca): ");
+    scanf("%d", &tipo);
+
+    if (tipo < 1 || tipo > 3) {
+        printf("Tipo invalido.\n");
+        return;
+    }
+
+    for (int i = 0; i < *qtd; i++) {
+        if (c[i].numero >= numero) {
+            numero = c[i].numero + 1;
+        }
+        if (strcmp(c[i].cliente, nome) == 0) {
+            existente = i;
+            contasCliente++;
+        }
+    }
+
+    if (existente != -1) {
+        if (contasCliente == 2 || c[existente].tipo == tipo ||
+            (tipo != POUPANCA && c[existente].tipo != POUPANCA)) {
+            printf("Combinacao de contas nao permitida.\n");
+            return;
+        }
+        numero = c[existente].numero;
+    }
+
+    strcpy(c[*qtd].cliente, nome);
+    c[*qtd].numero = numero;
+    c[*qtd].tipo = tipo;
+    c[*qtd].saldo = 0;
+    c[*qtd].qtdHistorico = 0;
+    c[*qtd].emprestimo = 0;
+    (*qtd)++;
+
+    printf("Conta %d-%02d criada.\n", numero, tipo);
+}
+
+int buscarConta(Carteira c[], int qtd, int numero, int tipo) {
+    for (int i = 0; i < qtd; i++) {
+        if (c[i].numero == numero && c[i].tipo == tipo) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+int lerConta(Carteira c[], int qtd) {
+    int numero, tipo, i;
+
+    printf("Numero da conta (ex: 1000-01): ");
+    scanf("%d-%d", &numero, &tipo);
+
+    i = buscarConta(c, qtd, numero, tipo);
+    if (i == -1) {
+        printf("Conta nao encontrada.\n");
+    }
+    return i;
+}
+
+void registrarHistorico(Carteira *c, float valor, char transacao) {
+    if (c->qtdHistorico == 5) {
+        for (int j = 0; j < 4; j++) {
+            c->historico[j] = c->historico[j + 1];
+        }
+        c->qtdHistorico = 4;
+    }
+
+    c->historico[c->qtdHistorico].valor = valor;
+    c->historico[c->qtdHistorico].transacao = transacao;
+    c->qtdHistorico++;
+}
+
+void depositar(Carteira c[], int qtd) {
+    float valor;
+    int i = lerConta(c, qtd);
+
+    if (i == -1) {
+        return;
+    }
+
+    printf("Valor do deposito: ");
+    scanf("%f", &valor);
+
+    if (valor <= 0) {
+        printf("Valor invalido.\n");
+        return;
+    }
+
+    c[i].saldo += valor;
+    registrarHistorico(&c[i], valor, 'D');
+    printf("Deposito realizado. Saldo: R$ %.2f\n", c[i].saldo);
+}
+
+void sacar(Carteira c[], int qtd) {
+    float valor;
+    int i = lerConta(c, qtd);
+
+    if (i == -1) {
+        return;
+    }
+
+    printf("Valor do saque: ");
+    scanf("%f", &valor);
+
+    if (valor <= 0) {
+        printf("Valor invalido.\n");
+        return;
+    }
+
+    if (c[i].tipo != CORRENTE && valor > c[i].saldo) {
+        printf("Saldo insuficiente.\n");
+        return;
+    }
+
+    c[i].saldo -= valor;
+    registrarHistorico(&c[i], valor, 'S');
+    printf("Saque realizado. Saldo: R$ %.2f\n", c[i].saldo);
+}
+
+float limiteEmprestimo(Carteira c[], int qtd, int i) {
+    int p;
+    float limite;
+
+    if (c[i].tipo != CORRENTE || c[i].emprestimo == 1) {
+        return 0;
+    }
+
+    p = buscarConta(c, qtd, c[i].numero, POUPANCA);
+    if (p == -1 || c[p].saldo <= 0) {
+        return 0;
+    }
+
+    limite = (c[i].saldo + c[p].saldo) * 10 * 0.25;
+    if (limite < 0) {
+        return 0;
+    }
+    return limite;
+}
+
+void solicitarEmprestimo(Carteira c[], int qtd) {
+    float valor, limite;
+    int i = lerConta(c, qtd);
+
+    if (i == -1) {
+        return;
+    }
+
+    limite = limiteEmprestimo(c, qtd, i);
+    if (limite <= 0) {
+        printf("Cliente nao esta apto para emprestimo.\n");
+        return;
+    }
+
+    printf("Limite disponivel: R$ %.2f\n", limite);
+    printf("Valor do emprestimo: ");
+    scanf("%f", &valor);
+
+    if (valor <= 0 || valor > limite) {
+        printf("Valor invalido.\n");
+        return;
+    }
+
+    c[i].saldo += valor;
+    c[i].emprestimo = 1;
+    registrarHistorico(&c[i], valor, 'E');
+    printf("Emprestimo realizado. Saldo: R$ %.2f\n", c[i].saldo);
+}
+
+void mostrarRelatorio(Carteira c[], int qtd) {
+    float total = 0;
+
+    for (int i = 0; i < qtd; i++) {
+        total += c[i].saldo;
+    }
+
+    printf("\n== saldo total do banco ==\n");
+    printf("R$ %.2f : %d\n", total, qtd);
+
+    printf("\n== clientes aptos para emprestimo ==\n");
+    for (int i = 0; i < qtd; i++) {
+        float limite = limiteEmprestimo(c, qtd, i);
+        if (limite > 0) {
+            printf("%s | %d-%02d | R$ %.2f\n", c[i].cliente, c[i].numero,
+                   c[i].tipo, limite);
+        }
+    }
+
+    printf("\n== clientes negativados ==\n");
+    for (int i = 0; i < qtd; i++) {
+        if (c[i].tipo == CORRENTE && c[i].saldo < 0) {
+            printf("%s | %d-%02d | R$ %.2f\n", c[i].cliente, c[i].numero,
+                   c[i].tipo, c[i].saldo);
+        }
+    }
+
+    printf("\n== clientes para capitalizacao ==\n");
+    for (int i = 0; i < qtd; i++) {
+        if (c[i].tipo == SALARIO && c[i].saldo >= 1000 && c[i].saldo <= 1500) {
+            printf("%s | %d-%02d | R$ %.2f\n", c[i].cliente, c[i].numero,
+                   c[i].tipo, c[i].saldo);
+        }
+    }
+}
+
+void mostrarHistorico(Carteira c[], int qtd) {
+    printf("\n== historico do banco ==\n");
+
+    for (int i = 0; i < qtd; i++) {
+        printf("\n%s | %d-%02d\n", c[i].cliente, c[i].numero, c[i].tipo);
+        if (c[i].qtdHistorico == 0) {
+            printf("Sem movimentacoes.\n");
+        }
+        for (int j = 0; j < c[i].qtdHistorico; j++) {
+            printf("%.2f : %c\n", c[i].historico[j].valor,
+                   c[i].historico[j].transacao);
+        }
+    }
+}
